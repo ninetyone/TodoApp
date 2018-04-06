@@ -20,7 +20,7 @@ app.post('/todos', (req, res) => {
         res.send(doc);
     }).catch(e => {
         res.status(400).send(e);
-    });    
+    });
 });
 
 
@@ -29,3 +29,7 @@ app.listen(PORT, (err) => {
     if (err) return console.log('Unable to listen on port: ' + PORT);
     console.log('Listening on port: ' + PORT);
 });
+
+module.exports = {
+    app
+};
