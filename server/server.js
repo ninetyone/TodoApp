@@ -10,16 +10,22 @@ const app = express();
 app.use(bodyParser.json());
 
 app.post('/todos', (req, res) => {
-    console.log(req.body);
-
     const newTodo = new Todo({
         text: req.body.text
     });
 
     newTodo.save().then(doc => {
         res.send(doc);
-    }).catch(e => {
-        res.status(400).send(e);
+    }).catch(err => {
+        res.status(400).send(err);
+    });
+});
+
+app.get('/todos', (req, res) => {
+    Todo.find().then(docs => {
+        res.send({docs});
+    }).catch(err => {
+        res.status(404).send(err);
     });
 });
 
