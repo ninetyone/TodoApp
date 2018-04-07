@@ -6,6 +6,7 @@ const {mongoose} = require('./db/mongoose');
 const {User} = require('./models/user');
 const {Todo} = require('./models/todo');
 
+const port = process.env.PORT || 5000;
 const app = express();
 
 app.use(bodyParser.json());
@@ -42,10 +43,9 @@ app.get('/todo/:id', (req, res) => {
     });
 });
 
-const PORT = 5000;
-app.listen(PORT, (err) => {
-    if (err) return console.log('Unable to listen on port: ' + PORT);
-    console.log('Listening on port: ' + PORT);
+app.listen(port, (err) => {
+    if (err) return console.log('Unable to listen on port: ' + port);
+    console.log('Listening on port: ' + port);
 });
 
 module.exports = {

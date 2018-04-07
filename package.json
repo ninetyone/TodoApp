@@ -4,8 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server/server.js",
     "test": "mocha \"./{,!(node_modules)/**/}/*.test.js\"",
     "test-watch": "nodemon -L --exec 'npm test'"
+  },
+  "engines": {
+    "node": "8.11.0"
   },
   "keywords": [],
   "author": "",
