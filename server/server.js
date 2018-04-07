@@ -14,17 +14,21 @@ app.post('/todos', (req, res) => {
         text: req.body.text
     });
 
-    newTodo.save().then(doc => {
+    newTodo.save()
+    .then(doc => {
         res.send(doc);
-    }).catch(err => {
+    })
+    .catch(err => {
         res.status(400).send(err);
     });
 });
 
 app.get('/todos', (req, res) => {
-    Todo.find().then(docs => {
+    Todo.find()
+    .then(docs => {
         res.send({docs});
-    }).catch(err => {
+    })
+    .catch(err => {
         res.status(404).send(err);
     });
 });
