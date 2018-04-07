@@ -95,7 +95,42 @@ describe('GET /todo/:id', () => {
         .get(`/todo/${id}`)
         .expect(404)
         .expect(res => {
-            expect(res.body).toEqual({});
+            expect(res.body.todo).toBeNull();
+        })
+        .end(done);
+    });
+});
+
+describe('DELETE /todo/:id', () => {
+    it('Should remove todo for a valid ObjectId', done => {
+        const id = testTodos[0]._id;
+        request(app)
+        .delete(`/todo/${id}`)
+        .expect(200)
+        .expect(res => {
+            expect(res.body.todo.text).toBe(testTodos[0].text);
+        })
+        .end(done);
+    });
+
+    it('Should return 404 if todo not found', done => {
+        const id = new ObjectID();
+        request(app)
+        .delete(`/todo/${id}`)
+        .expect(404)
+        .expect(res => {
+            expect(res.body.todo).toBeNull();
+        })
+        .end(done);
+    });
+
+    it('Should return 400 for an invalid ObjectId', done => {
+        const id = new ObjectID() + '123';
+        request(app)
+        .delete(`/todo/${id}`)
+        .expect(400)
+        .expect(res => {
+            expect(res.body.error).toBe(`${id} is an invalid todoId`);
         })
         .end(done);
     });

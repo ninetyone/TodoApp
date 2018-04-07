@@ -27,7 +27,7 @@ app.get('/todos', (req, res) => {
     Todo.find().then(todos => {
         res.send({todos});
     }).catch(err => {
-        res.status(404).send(err);
+        res.status(400).send(err);
     });
 });
 
@@ -36,12 +36,25 @@ app.get('/todo/:id', (req, res) => {
     if (!ObjectID.isValid(id)) return res.status(400).send({error: `${id} is an invalid todoId`});
 
     Todo.findById(id).then(todo => {
-        if (!todo) return res.status(404).send({});
+        if (!todo) return res.status(404).send({todo});
         res.send({todo});
     }).catch(err => {
-        res.status(404).send();
+        res.status(400).send();
     });
 });
+
+app.delete('/todo/:id', (req, res) => {
+    const id = req.params.id;
+    if (!ObjectID.isValid(id)) return res.status(400).send({error: `${id} is an invalid todoId`});
+
+    Todo.findByIdAndRemove(id).then(todo => {
+        if (!todo) return res.status(404).send({todo});
+        res.send({todo});
+    }).catch(err => {
+        res.status(400).send();
+    });
+});
+
 
 app.listen(port, (err) => {
     if (err) return console.log('Unable to listen on port: ' + port);
