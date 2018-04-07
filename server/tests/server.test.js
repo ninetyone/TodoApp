@@ -7,7 +7,7 @@ const {Todo} = require('./../models/todo');
 
 const testTodos = [
     {text: "Test Todo1", _id: new ObjectID()},
-    {text: "Test Todo2", _id: new ObjectID()},
+    {text: "Test Todo2", _id: new ObjectID(), completed: true, completedAt: new Date().getTime()},
     {text: "Test Todo3", _id: new ObjectID()}
 ];
 
@@ -17,11 +17,11 @@ beforeEach(done => {
      }).then(() => done());
 });
 
-describe('POST /todos', () => {
+describe('POST /todo', () => {
     it('Should create a new todo', done => {
         const text = 'Test Todo Task2';
         request(app)
-        .post('/todos')
+        .post('/todo')
         .send({text})
         .expect(200)
         .expect(res => {
@@ -41,7 +41,7 @@ describe('POST /todos', () => {
     it('Should not create a new todo with invalid body', done => {
         const todoText = '  ';
         request(app)
-        .post('/todos')
+        .post('/todo')
         .send({todoText})
         .expect(400)
         .end((err, res) => {
@@ -110,7 +110,14 @@ describe('DELETE /todo/:id', () => {
         .expect(res => {
             expect(res.body.todo.text).toBe(testTodos[0].text);
         })
-        .end(done);
+        .end((err, res) => {
+            if (err) return done(err);
+
+            Todo.findById(id).then(todo => {
+                expect(todo).toBeNull();
+                done();
+            }).catch(err => done(err));
+        });
     });
 
     it('Should return 404 if todo not found', done => {
@@ -134,4 +141,60 @@ describe('DELETE /todo/:id', () => {
         })
         .end(done);
     });
+});
+
+describe('PATCH /todo/:id', () => {
+    it('Should update the todo', done => {
+        const id = testTodos[0]._id;
+        const body = {
+            text: "This is a patch update",
+            completed: true
+        }
+        request(app)
+        .patch(`/todo/${id}`)
+        .send(body)
+        .expect(200)
+        .expect(res => {
+            expect(res.body.todo.text).toBe(body.text);
+            expect(res.body.todo.completed).toBe(true);
+        })
+        .end((err, res) => {
+            if (err) return done(err);
+
+            Todo.findById(id).then(todo => {
+                expect(todo.text).toBe(body.text);
+                expect(res.body.todo.completed).toBe(true);
+                expect(typeof res.body.todo.completedAt).toBe('number');
+                done();
+            }).catch(err => done(err));
+        });
+    });
+
+    it('Should clear completedAt when todo is complete', done => {
+        const id = testTodos[1]._id;
+        const body = {
+            text: "This is a patch update",
+            completed: false
+        }
+        request(app)
+        .patch(`/todo/${id}`)
+        .send(body)
+        .expect(200)
+        .expect(res => {
+            expect(res.body.todo.text).toBe(body.text);
+            expect(res.body.todo.completed).toBe(false);
+            expect(res.body.todo.completedAt).toBeNull();
+        })
+        .end((err, res) => {
+            if (err) return done(err);
+
+            Todo.findById(id).then(todo => {
+                expect(res.body.todo.text).toBe(body.text);
+                expect(res.body.todo.completed).toBe(false);
+                expect(res.body.todo.completedAt).toBeNull();
+                done();
+            }).catch(err => done(err));
+        });
+    });
+
 });
