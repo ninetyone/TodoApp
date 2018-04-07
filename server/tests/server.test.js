@@ -11,11 +11,9 @@ const testTodos = [
 ];
 
 beforeEach(done => {
-     Todo.remove({})
-     .then(() => {
+     Todo.remove({}).then(() => {
          Todo.insertMany(testTodos)
-     })
-     .then(() => done());
+     }).then(() => done());
 });
 
 describe('POST /todos', () => {
@@ -31,13 +29,11 @@ describe('POST /todos', () => {
         .end((err, res) => {
             if (err) return done(err);
 
-            Todo.find()
-            .then(todos => {
+            Todo.find().then(todos => {
                 expect(todos.length).toBe(testTodos.length + 1);
                 expect(todos[testTodos.length].text).toBe(text);
                 done();
-            })
-            .catch(err => done(err));
+            }).catch(err => done(err));
         })
     });
 
@@ -50,12 +46,10 @@ describe('POST /todos', () => {
         .end((err, res) => {
             if (err) return done(err);
             
-            Todo.find({})
-            .then(todos => {
+            Todo.find({}).then(todos => {
                 expect(todos.length).toBe(testTodos.length);
                 done();
-            })
-            .catch(err => done(err));
+            }).catch(err => done(err));
         });
     });
 });

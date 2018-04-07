@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
 const {mongoose} = require('./db/mongoose');
 const {User} = require('./models/user');
@@ -14,25 +15,32 @@ app.post('/todos', (req, res) => {
         text: req.body.text
     });
 
-    newTodo.save()
-    .then(doc => {
-        res.send(doc);
-    })
-    .catch(err => {
+    newTodo.save().then(todo => {
+        res.send({todo});
+    }).catch(err => {
         res.status(400).send(err);
     });
 });
 
 app.get('/todos', (req, res) => {
-    Todo.find()
-    .then(docs => {
-        res.send({docs});
-    })
-    .catch(err => {
+    Todo.find().then(todos => {
+        res.send({todos});
+    }).catch(err => {
         res.status(404).send(err);
     });
 });
 
+app.get('/todo/:id', (req, res) => {
+    const id = req.params.id;
+    if (!ObjectID.isValid(id)) return res.send(`${id} is an invalid todoId`);
+
+    Todo.findById(id).then(todo => {
+        if (!todo) return res.status(404).send({});
+        res.send({todo});
+    }).catch(err => {
+        res.status(404).send();
+    });
+});
 
 const PORT = 5000;
 app.listen(PORT, (err) => {
