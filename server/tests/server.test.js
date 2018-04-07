@@ -1,13 +1,14 @@
 const expect = require('expect');
 const request = require('supertest');
+const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
 
 const testTodos = [
-    {text: "Test Todo1"},
-    {text: "Test Todo2"},
-    {text: "Test Todo3"}
+    {text: "Test Todo1", _id: new ObjectID()},
+    {text: "Test Todo2", _id: new ObjectID()},
+    {text: "Test Todo3", _id: new ObjectID()}
 ];
 
 beforeEach(done => {
@@ -24,7 +25,7 @@ describe('POST /todos', () => {
         .send({text})
         .expect(200)
         .expect(res => {
-            expect(res.body.text).toBe(text);
+            expect(res.body.todo.text).toBe(text);
         })
         .end((err, res) => {
             if (err) return done(err);
@@ -60,7 +61,42 @@ describe('GET /todos', () => {
         get('/todos')
         .expect(200)
         .expect(res => {
-            expect(res.body.docs[0].text).toBe(testTodos[0].text);
+            expect(res.body.todos[0].text).toBe(testTodos[0].text);
         }).end(done);
+    });
+});
+
+describe('GET /todo/:id', () => {
+    it('Should return the todo matching with id', done => {
+        const id = testTodos[0]._id.toHexString();
+        request(app)
+        .get(`/todo/${id}`)
+        .expect(200)
+        .expect(res => {
+            expect(res.body.todo.text).toBe(testTodos[0].text);
+        })
+        .end(done);
+    });
+
+    it('Should return 400 when ObjectId is invalid', done => {
+        const id = testTodos[0]._id + 123;
+        request(app)
+        .get(`/todo/${id}`)
+        .expect(400)
+        .expect(res => {
+            expect(res.body.error).toBe(`${id} is an invalid todoId`);
+        })
+        .end(done);
+    });
+
+    it('Should return 404 when id doesn\'t match', done => {
+        const id = new ObjectID().toHexString();
+        request(app)
+        .get(`/todo/${id}`)
+        .expect(404)
+        .expect(res => {
+            expect(res.body).toEqual({});
+        })
+        .end(done);
     });
 });
