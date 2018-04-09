@@ -77,6 +77,18 @@ app.patch('/todo/:id', (req, res) => {
     });
 });
 
+app.post('/user', (req, res) => {
+    const body = _.pick(req.body, ['email', 'password']);
+    const newUser = new User(body);
+    newUser.save().then(() => {
+        return newUser.generateAuthToken();
+    }).then(token => {
+        res.header('x-auth', token).send(newUser);
+    }).catch(err => {
+        res.status(400).send(err);
+    });
+});
+
 app.listen(port, (err) => {
     if (err) return console.log('Unable to listen on port: ' + port);
     console.log('Listening on port: ' + port);
