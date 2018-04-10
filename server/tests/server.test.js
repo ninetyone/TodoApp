@@ -239,7 +239,9 @@ describe('POST /user', () => {
                 expect(user).toBeTruthy();
                 expect(user.password).not.toBe(input.password);
                 done();
-            })
+            }).catch(err => {
+                done(err);  
+            });
         });
     });
 
@@ -268,3 +270,44 @@ describe('POST /user', () => {
     });
 });
 
+describe('POST /user/login', () => {
+    it('Should login user and return auth token', done => {
+        const input = {email: testUsers[1].email, password: testUsers[1].password};
+        request(app).
+        post('/user/login')
+        .send(input)
+        .expect(200)
+        .expect(res => {
+            expect(res.headers['x-auth']).toBeTruthy();
+            expect(res.body.email).toBe(testUsers[1].email);
+        })
+        .end((err, res) => {
+            if (err) return done(err);
+            User.findById(testUsers[1]._id).then((user) => {
+                expect(user.tokens[0]).toHaveProperty('access', 'auth');
+                expect(user.tokens[0]).toHaveProperty('token', res.headers['x-auth']);
+                done();
+            }).catch(err => {
+                done(err);  
+            });
+        });
+    });
+
+    it('Should return 400 if invalid login credentials', done => {
+        const input = {email: testUsers[1].email, password: 'incorrect password'};
+        request(app).
+        post('/user/login')
+        .send(input)
+        .expect(400)
+        .expect(res => {
+            expect(res.headers['x-auth']).toBeFalsy();
+        })
+        .end((err, res) => {
+            User.findById(testUsers[1]._id).then(user => {
+                expect(user.tokens.length).toBe(0);
+                done();
+            }).catch(err => done(err));
+        });
+    });
+
+});
