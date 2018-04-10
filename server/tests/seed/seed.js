@@ -10,13 +10,13 @@ const testUsers = [
     {_id: userOneID, email: "abc@example.com", password: 'user1Pass', 
         tokens: [{
             access: 'auth',
-            token: jwt.sign({_id: userOneID.toHexString(), access: 'auth'}, 'ThisIsMyRandomSalt%$#918').toString()
+            token: jwt.sign({_id: userOneID.toHexString(), access: 'auth'}, process.env.JWT_SECRET).toString()
         }]
     },
     {_id: userTwoID, email: "zzz@example.com", password: 'user2Pass',
         tokens: [{
             access: 'auth',
-            token: jwt.sign({_id: userTwoID.toHexString(), access: 'auth'}, 'ThisIsMyRandomSalt%$#918').toString()
+            token: jwt.sign({_id: userTwoID.toHexString(), access: 'auth'}, process.env.JWT_SECRET).toString()
         }]
     }
 ];
