@@ -105,6 +105,14 @@ app.post('/user/login', (req, res) => {
     });
 });
 
+app.delete('/user/me/token', authenticate, (req, res) => {
+    req.user.removeToken(req.token).then(() => {
+        res.send();
+    }).catch(err => {
+        res.status(400).send();
+    })
+});
+
 app.listen(port, (err) => {
     if (err) return console.log('Unable to listen on port: ' + port);
     console.log('Listening on port: ' + port);

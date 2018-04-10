@@ -311,3 +311,20 @@ describe('POST /user/login', () => {
     });
 
 });
+
+describe('DELETE /user/me/token', () => {
+
+    it('Should delete the token for the user', done => {
+        request(app)
+        .delete('/user/me/token')
+        .set('x-auth', testUsers[0].tokens[0].token)
+        .expect(200)
+        .end(res => {
+            User.findById(testUsers[0]._id).then(user => {
+                expect(user.tokens.length).toBe(0);
+                done();
+            }).catch(err => done(err));
+        });
+    });
+
+});
