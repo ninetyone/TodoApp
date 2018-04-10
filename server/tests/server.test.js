@@ -15,6 +15,7 @@ describe('POST /todo', () => {
         const text = 'Test Todo Task2';
         request(app)
         .post('/todo')
+        .set('x-auth', testUsers[0].tokens[0].token)
         .send({text})
         .expect(200)
         .expect(res => {
@@ -35,6 +36,7 @@ describe('POST /todo', () => {
         const todoText = '  ';
         request(app)
         .post('/todo')
+        .set('x-auth', testUsers[0].tokens[0].token)
         .send({todoText})
         .expect(400)
         .end((err, res) => {
@@ -52,8 +54,10 @@ describe('GET /todos', () => {
     it('Should fetch a list of todos', done => {
         request(app).
         get('/todos')
+        .set('x-auth', testUsers[0].tokens[0].token)
         .expect(200)
         .expect(res => {
+            expect(res.body.todos.length).toBe(1);
             expect(res.body.todos[0].text).toBe(testTodos[0].text);
         }).end(done);
     });
@@ -64,6 +68,7 @@ describe('GET /todo/:id', () => {
         const id = testTodos[0]._id.toHexString();
         request(app)
         .get(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
         .expect(200)
         .expect(res => {
             expect(res.body.todo.text).toBe(testTodos[0].text);
@@ -75,6 +80,7 @@ describe('GET /todo/:id', () => {
         const id = testTodos[0]._id + 123;
         request(app)
         .get(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
         .expect(400)
         .expect(res => {
             expect(res.body.error).toBe(`${id} is an invalid todoId`);
@@ -86,10 +92,20 @@ describe('GET /todo/:id', () => {
         const id = new ObjectID().toHexString();
         request(app)
         .get(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
         .expect(404)
         .expect(res => {
             expect(res.body.todo).toBeNull();
         })
+        .end(done);
+    });
+
+    it('Should not return a todo created by another user', done => {
+        const id = testTodos[1]._id.toHexString();
+        request(app)
+        .get(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
+        .expect(404)
         .end(done);
     });
 });
@@ -99,6 +115,7 @@ describe('DELETE /todo/:id', () => {
         const id = testTodos[0]._id;
         request(app)
         .delete(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
         .expect(200)
         .expect(res => {
             expect(res.body.todo.text).toBe(testTodos[0].text);
@@ -117,6 +134,7 @@ describe('DELETE /todo/:id', () => {
         const id = new ObjectID();
         request(app)
         .delete(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
         .expect(404)
         .expect(res => {
             expect(res.body.todo).toBeNull();
@@ -128,11 +146,28 @@ describe('DELETE /todo/:id', () => {
         const id = new ObjectID() + '123';
         request(app)
         .delete(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
         .expect(400)
         .expect(res => {
             expect(res.body.error).toBe(`${id} is an invalid todoId`);
         })
         .end(done);
+    });
+
+    it('Should not remove todo of some other user', done => {
+        const id = testTodos[1]._id;
+        request(app)
+        .delete(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
+        .expect(404)
+        .end((err, res) => {
+            if (err) return done(err);
+
+            Todo.findById(id).then(todo => {
+                expect(todo).toBeTruthy();
+                done();
+            }).catch(err => done(err));
+        });
     });
 });
 
@@ -145,6 +180,7 @@ describe('PATCH /todo/:id', () => {
         }
         request(app)
         .patch(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
         .send(body)
         .expect(200)
         .expect(res => {
@@ -164,13 +200,14 @@ describe('PATCH /todo/:id', () => {
     });
 
     it('Should clear completedAt when todo is complete', done => {
-        const id = testTodos[1]._id;
+        const id = testTodos[1]._id.toHexString();
         const body = {
             text: "This is a patch update",
             completed: false
         }
         request(app)
         .patch(`/todo/${id}`)
+        .set('x-auth', testUsers[1].tokens[0].token)
         .send(body)
         .expect(200)
         .expect(res => {
@@ -185,6 +222,27 @@ describe('PATCH /todo/:id', () => {
                 expect(res.body.todo.text).toBe(body.text);
                 expect(res.body.todo.completed).toBe(false);
                 expect(res.body.todo.completedAt).toBeNull();
+                done();
+            }).catch(err => done(err));
+        });
+    });
+
+    it('Should not update the todo of some other user', done => {
+        const id = testTodos[1]._id;
+        const body = {
+            text: "This is a patch update",
+            completed: true
+        }
+        request(app)
+        .patch(`/todo/${id}`)
+        .set('x-auth', testUsers[0].tokens[0].token)
+        .send(body)
+        .expect(404)
+        .end((err, res) => {
+            if (err) return done(err);
+
+            Todo.findById(id).then(todo => {
+                expect(todo.text).toBe(testTodos[1].text);
                 done();
             }).catch(err => done(err));
         });
@@ -284,8 +342,8 @@ describe('POST /user/login', () => {
         .end((err, res) => {
             if (err) return done(err);
             User.findById(testUsers[1]._id).then((user) => {
-                expect(user.tokens[0]).toHaveProperty('access', 'auth');
-                expect(user.tokens[0]).toHaveProperty('token', res.headers['x-auth']);
+                expect(user.tokens[1]).toHaveProperty('access', 'auth');
+                expect(user.tokens[1]).toHaveProperty('token', res.headers['x-auth']);
                 done();
             }).catch(err => {
                 done(err);  
@@ -304,7 +362,7 @@ describe('POST /user/login', () => {
         })
         .end((err, res) => {
             User.findById(testUsers[1]._id).then(user => {
-                expect(user.tokens.length).toBe(0);
+                expect(user.tokens.length).toBe(1);
                 done();
             }).catch(err => done(err));
         });
